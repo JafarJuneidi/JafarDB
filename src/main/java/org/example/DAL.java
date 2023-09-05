@@ -100,7 +100,38 @@ public class DAL {
         return p;
     }
 
-    public void releasePage(Page p) {
-        freelist.releasePage(p.getNum());
+    public void releasePage(long pageNum) {
+        freelist.releasePage(pageNum);
+    }
+
+    public Node getNode(long pageNum) throws IOException {
+        Page p = readPage(pageNum);
+        Node node = new Node();
+        node.setPageNum(pageNum);
+        node.deserialize(p.getData());
+        return node;
+    }
+
+    public Node writeNode(Node node) throws IOException {
+        Page page = allocateEmptyPage();
+        if (node.getPageNum() == 0) {
+            page.setNum(freelist.getNextPage());
+            node.setPageNum(page.getNum());
+        } else {
+            page.setNum(node.getPageNum());
+        }
+
+        page.setData(node.serialize(page.getData()));
+
+        writePage(page);
+        return node;
+    }
+
+    public void deleteNode(long pageNum) {
+        releasePage(pageNum);
+    }
+
+    public long getRoot() {
+        return meta.root;
     }
 }

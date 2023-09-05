@@ -8,25 +8,42 @@ public class Main {
         String path = "db.db";
 
         try {
-            DAL dal = new DAL(path);
+//            DAL dal = new DAL(path);
+//
+//            Page p = dal.allocateEmptyPage();
+//            byte[] dataToCopy = "data".getBytes();
+//            System.arraycopy(dataToCopy, 0, p.getData(), 0, dataToCopy.length);
+//            dal.writePage(p);
+//
+//            dal.close();
+//
+//            dal = new DAL(path);
+//
+//            p = dal.allocateEmptyPage();
+//            byte[] dataToCopy2 = "data2".getBytes();
+//            System.arraycopy(dataToCopy2, 0, p.getData(), 0, dataToCopy2.length);
+//            dal.writePage(p);
+//
+//            p = dal.allocateEmptyPage();
+//            dal.releasePage(p.getNum());
+//
+//            dal.close();
 
-            Page p = dal.allocateEmptyPage();
-            byte[] dataToCopy = "data".getBytes();
-            System.arraycopy(dataToCopy, 0, p.getData(), 0, dataToCopy.length);
-            dal.writePage(p);
+            // initialize db
+            DAL dal = new DAL("mainTest");
 
-            dal.close();
+            Node node = dal.getNode(dal.getRoot());
+            node.setDal(dal);
 
-            dal = new DAL(path);
+            Node.Pair<Integer, Node> searchResult = node.findKey("Key1".getBytes());
+            int index = searchResult.key();
+            Node containingNode = searchResult.value();
 
-            p = dal.allocateEmptyPage();
-            byte[] dataToCopy2 = "data2".getBytes();
-            System.arraycopy(dataToCopy2, 0, p.getData(), 0, dataToCopy2.length);
-            dal.writePage(p);
+            Item res = containingNode.getItems().get(index); // Assuming you have a getItems() method that returns the items list
 
-            p = dal.allocateEmptyPage();
-            dal.releasePage(p);
+            System.out.printf("key is: %s, value is: %s", new String(res.key()), new String(res.value()));
 
+            // Close the db
             dal.close();
         } catch(IOException e) {
             e.printStackTrace();
