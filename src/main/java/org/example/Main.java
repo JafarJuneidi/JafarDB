@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void oldMain(String[] args) {
         String path = "db.db";
 
-        try {
+//        try {
 //            DAL dal = new DAL(path);
 //
 //            Page p = dal.allocateEmptyPage();
@@ -30,23 +30,56 @@ public class Main {
 //            dal.close();
 
             // initialize db
-            DAL dal = new DAL("mainTest");
+//            DAL dal = new DAL("mainTest");
+//
+//            Node node = dal.getNode(dal.getRoot());
+//            node.setDal(dal);
+//
+//            Node.Pair<Integer, Node> searchResult = node.findKey("Key1".getBytes());
+//            int index = searchResult.key();
+//            Node containingNode = searchResult.value();
+//
+//            Item res = containingNode.getItems().get(index); // Assuming you have a getItems() method that returns the items list
+//
+//            System.out.printf("key is: %s, value is: %s", new String(res.key()), new String(res.value()));
+//
+//            // Close the db
+//            dal.close();
+//        } catch(IOException e) {
+//            e.printStackTrace();
+//        }
+    }
 
-            Node node = dal.getNode(dal.getRoot());
-            node.setDal(dal);
+    public static void main(String[] args) {
+        Options options = new Options();
 
-            Node.Pair<Integer, Node> searchResult = node.findKey("Key1".getBytes());
-            int index = searchResult.key();
-            Node containingNode = searchResult.value();
+        DAL dal = null;
+        try {
+            dal = new DAL("mainTest", options);
 
-            Item res = containingNode.getItems().get(index); // Assuming you have a getItems() method that returns the items list
+            Collection collection = new Collection("collection1".getBytes(), dal.getRoot(), dal);
 
-            System.out.printf("key is: %s, value is: %s", new String(res.key()), new String(res.value()));
+            collection.put("Key1".getBytes(), "Value1".getBytes());
+            collection.put("Key2".getBytes(), "Value2".getBytes());
+            collection.put("Key3".getBytes(), "Value3".getBytes());
+            collection.put("Key4".getBytes(), "Value4".getBytes());
+            collection.put("Key5".getBytes(), "Value5".getBytes());
+            collection.put("Key6".getBytes(), "Value6".getBytes());
+            Item item = collection.find("Key3".getBytes());
 
-            // Close the db
-            dal.close();
-        } catch(IOException e) {
-            e.printStackTrace();
+            System.out.printf("key is: %s, value is: %s\n", new String(item.key()), new String(item.value()));
+        } catch (Exception e) {
+//            e.printStackTrace();
+            System.out.println(e.getMessage());
+        } finally {
+            if (dal != null) {
+                try {
+                    dal.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
+
 }

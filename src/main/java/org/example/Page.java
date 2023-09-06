@@ -9,6 +9,10 @@ public class Page {
         this.data = data;
     }
 
+    public Page(byte[] data) {
+        this.data = data;
+    }
+
     public byte[] getData() {
         return data;
     }

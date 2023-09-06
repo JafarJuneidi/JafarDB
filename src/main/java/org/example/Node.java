@@ -13,7 +13,9 @@ public class Node {
     private List<Item> items;
     private List<Long> childNodes;
 
-    public Node() {}
+    public Node() {
+        childNodes = new ArrayList<>();
+    }
 
     public void setPageNum(long pageNum) {
         this.pageNum = pageNum;
@@ -184,30 +186,134 @@ public class Node {
         return items;
     }
 
+    public void setItems(List<Item> items) {
+        this.items = items;
+    }
+
+    public void setChildNodes(List<Long> childNodes) {
+        this.childNodes = childNodes;
+    }
+
+    public List<Long> getChildNodes() {
+        return childNodes;
+    }
+
     public record Pair<K, V>(K key, V value) {}
 
-    public Pair<Integer, Node> findKey(byte[] key) throws IOException {
-        Pair<Integer, Node> result = findKeyHelper(this, key);
+    public FindResult findKey(byte[] key, boolean exact) throws IOException {
+        List<Integer> ancestorIndexes = new ArrayList<>();
+        ancestorIndexes.add(0);  // index of root
+        FindResult result = findKeyHelper(this, key, exact, ancestorIndexes);
         if (result == null) {
-            return new Pair<>(-1, null);
+            return new FindResult(-1, null, ancestorIndexes);
         }
         return result;
     }
 
-    private Pair<Integer, Node> findKeyHelper(Node node, byte[] key) throws IOException {
+    private FindResult findKeyHelper(Node node, byte[] key, boolean exact, List<Integer> ancestorsIndexes) throws IOException {
         Pair<Boolean, Integer> searchResult = node.findKeyInNode(key);
         Boolean wasFound = searchResult.key;
         int index = searchResult.value;
 
         if (wasFound) {
-            return new Pair<>(index, node);
+            return new FindResult(index, node, ancestorsIndexes);
         }
 
         if (node.isLeaf()) {
-            return null;
+            if (exact) {
+                return null;
+            }
+            return new FindResult(index, node, ancestorsIndexes);
         }
 
+        ancestorsIndexes.add(index);
         Node nextChild = node.getNode(node.childNodes.get(index));
-        return findKeyHelper(nextChild, key);
+        return findKeyHelper(nextChild, key, exact, ancestorsIndexes);
+    }
+
+
+    public int elementSize(int i) {
+        int size = 0;
+        size += items.get(i).key().length;
+        size += items.get(i).value().length;
+        size += Constants.pageNumSize;
+
+        return size;
+    }
+
+    public int nodeSize() {
+        int size = 0;
+        size += Constants.nodeHeaderSize;
+
+        for (int i = 0; i < items.size(); i++) {
+            size += elementSize(i);
+        }
+
+        // Add last page
+        size += Constants.pageNumSize;
+        return size;
+    }
+
+    public int addItem(Item item, int insertionIndex) {
+        items.add(insertionIndex, item);
+        return insertionIndex;
+    }
+
+    public boolean isOverPopulated() {
+        return dal.isOverPopulated(this);
+    }
+
+    public boolean isUnderPopulated() {
+        return dal.isUnderPopulated(this);
+    }
+
+    public void split(Node nodeToSplit, int nodeToSplitIndex) throws IOException {
+        int splitIndex = nodeToSplit.dal.getSplitIndex(nodeToSplit);
+
+        Item middleItem = nodeToSplit.getItems().get(splitIndex);
+        Node newNode;
+
+        if (nodeToSplit.isLeaf()) {
+            newNode = writeNode(dal.newNode(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size()), new ArrayList<>()));
+            nodeToSplit.setItems(nodeToSplit.getItems().subList(0, splitIndex));
+        } else {
+            newNode = writeNode(dal.newNode(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size()),
+                    nodeToSplit.getChildNodes().subList(splitIndex + 1, nodeToSplit.getChildNodes().size())));
+            nodeToSplit.setItems(nodeToSplit.getItems().subList(0, splitIndex));
+            nodeToSplit.setChildNodes(nodeToSplit.getChildNodes().subList(0, splitIndex + 1));
+        }
+
+        addItem(middleItem, nodeToSplitIndex);
+        if (childNodes.size() == nodeToSplitIndex + 1) {
+            childNodes.add(newNode.getPageNum());
+        } else {
+            childNodes.add(nodeToSplitIndex + 1, newNode.getPageNum());
+        }
+
+        writeNodes(this, nodeToSplit);
+    }
+
+    public static class FindResult {
+        private final int index;
+        private final Node node;
+        private final List<Integer> ancestorIndexes;
+
+        public FindResult(int index, Node node, List<Integer> ancestorIndexes) {
+            this.index = index;
+            this.node = node;
+            this.ancestorIndexes = ancestorIndexes;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public Node getNode() {
+            return node;
+        }
+
+        public List<Integer> getAncestorIndexes() {
+            return ancestorIndexes;
+        }
     }
 }

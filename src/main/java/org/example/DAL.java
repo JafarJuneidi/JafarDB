@@ -3,16 +3,17 @@ package org.example;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.List;
 
 public class DAL {
     private RandomAccessFile file;
-    private int pageSize;
+    private Options options;
     private Meta meta;
     private Freelist freelist;
     private static final int pageNumSize = 8;
 
-    public DAL(String path) throws IOException {
-        this.pageSize = 4096;
+    public DAL(String path, Options options) throws IOException {
+        this.options = options;
 
         File file = new File(path);
         if (file.exists()) {
@@ -44,23 +45,23 @@ public class DAL {
     }
 
     public Page allocateEmptyPage() {
-        return new Page(freelist.getNextPage(), new byte[pageSize]);
+        return new Page(new byte[options.getPageSize()]);
     }
 
     public Page allocateEmptyPage(long pageNum) {
-        return new Page(pageNum, new byte[pageSize]);
+        return new Page(pageNum, new byte[options.getPageSize()]);
     }
 
     public Page readPage(long pageNum) throws IOException {
         Page page = allocateEmptyPage(pageNum);
-        long offset = pageNum * pageSize;
+        long offset = pageNum * options.getPageSize();
         file.seek(offset);
         file.read(page.getData());
         return page;
     }
 
     public void writePage(Page page) throws IOException {
-        long offset = page.getNum() * pageSize;
+        long offset = page.getNum() * options.getPageSize();
         try {
             file.seek(offset);
             file.write(page.getData());
@@ -109,6 +110,7 @@ public class DAL {
         Node node = new Node();
         node.setPageNum(pageNum);
         node.deserialize(p.getData());
+        node.setDal(this);
         return node;
     }
 
@@ -133,5 +135,46 @@ public class DAL {
 
     public long getRoot() {
         return meta.root;
+    }
+
+    public float maxThreshold() {
+        return options.getMaxFillPercent() * options.getPageSize();
+    }
+
+    public boolean isOverPopulated(Node node) {
+        return node.nodeSize() > maxThreshold();
+    }
+
+    public float minThreshold() {
+        return options.getMinFillPercent() * (float) options.getPageSize();
+    }
+
+    public boolean isUnderPopulated(Node node) {
+        return (float) node.nodeSize() < minThreshold();
+    }
+
+    public int getSplitIndex(Node node) {
+        int size = Constants.nodeHeaderSize;
+
+        for (int i = 0; i < node.getItems().size(); i++) {
+            size += node.elementSize(i);
+
+            // if we have a big enough page size (more than minimum), and didn't reach the last node, which means we can
+            // spare an element
+            if ( size > minThreshold() && i < node.getItems().size() - 1) {
+                return i + 1;
+            }
+        }
+
+        return -1;
+    }
+
+    public Node newNode(List<Item> items, List<Long> childNodes) {
+        Node node = new Node();
+        node.setItems(items);
+        node.setChildNodes(childNodes);
+        node.setPageNum(freelist.getNextPage());
+        node.setDal(this);
+        return node;
     }
 }
