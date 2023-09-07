@@ -17,6 +17,11 @@ public class Node {
         childNodes = new ArrayList<>();
     }
 
+    public Node(List<Item> items, List<Long> childNodes) {
+        this.items = items;
+        this.childNodes = childNodes;
+    }
+
     public void setPageNum(long pageNum) {
         this.pageNum = pageNum;
     }
@@ -315,5 +320,144 @@ public class Node {
         public List<Integer> getAncestorIndexes() {
             return ancestorIndexes;
         }
+    }
+
+    public void removeItemFromLeaf(int index) throws IOException {
+        items.remove(index);
+        writeNode(this);
+    }
+
+    public List<Integer> removeItemFromInternal(int index) throws IOException {
+        List<Integer> affectedNodes = new ArrayList<>();
+        affectedNodes.add(index);
+
+        Node aNode = getNode(childNodes.get(index));
+
+        while (!aNode.isLeaf()) {
+            // traversingIndex := len(n.childNodes) - 1 He used the current node's children here, not sure why
+            // todo
+            int traversingIndex = aNode.childNodes.size() - 1;
+            aNode = aNode.getNode(aNode.childNodes.get(traversingIndex));
+            affectedNodes.add(traversingIndex);
+        }
+
+        items.set(index, aNode.items.get(aNode.items.size() - 1));
+        aNode.items.remove(aNode.items.size() - 1);
+        writeNodes(this, aNode);
+
+        return affectedNodes;
+    }
+
+    public void rotateRight(Node leftNode, Node parentNode, Node rightNode, int rightNodeIndex) {
+        // Get last item and remove it
+        Item leftNodeItem = leftNode.items.remove(leftNode.items.size() - 1);
+
+        // Get item from parent node and assign the leftNode item instead
+        int parentNodeItemIndex = rightNodeIndex - 1;
+        if (isFirst(rightNodeIndex)) {
+            parentNodeItemIndex = 0;
+        }
+        Item parentNodeItem = parentNode.items.get(parentNodeItemIndex);
+        parentNode.items.set(parentNodeItemIndex, leftNodeItem);
+
+        // Assign parent item to right and make it first
+        rightNode.items.add(0, parentNodeItem);
+
+        // If it's an inner node then move children as well.
+        if (!leftNode.isLeaf()) {
+            long childNodeToShift = leftNode.childNodes.remove(leftNode.childNodes.size() - 1);
+            rightNode.childNodes.add(0, childNodeToShift);
+        }
+    }
+
+    public void rotateLeft(Node leftNode, Node parentNode, Node rightNode, int rightNodeIndex) {
+        // Get first item and remove it
+        Item rightNodeItem = rightNode.items.remove(0);
+
+        // Get item from parent node and assign the rightNodeItem item instead
+        int parentNodeItemIndex = rightNodeIndex;
+        if (isLast(rightNodeIndex)) {
+            parentNodeItemIndex = parentNode.items.size() - 1;
+        }
+        Item parentNodeItem = parentNode.items.get(parentNodeItemIndex);
+        parentNode.items.set(parentNodeItemIndex, rightNodeItem);
+
+        // Assign parent item to a and make it last
+        leftNode.items.add(parentNodeItem);
+
+        // If it's an inner node then move children as well.
+        if (!rightNode.isLeaf()) {
+            long childNodeToShift = rightNode.childNodes.remove(0);
+            leftNode.childNodes.add(childNodeToShift);
+        }
+    }
+
+    public void merge(Node node, int nodeIndex) throws Exception {
+        // Get the sibling node (aNode) to the left of bNode
+        Node leftNode = getNode(childNodes.get(nodeIndex - 1));
+
+        // Take the item from the parent, remove it, and add it to aNode
+        Item parentNodeItem = items.remove(nodeIndex - 1);
+        leftNode.items.add(parentNodeItem);
+
+        // Merge items from bNode into aNode
+        leftNode.items.addAll(node.items);
+
+        // Remove bNode from the childNodes list
+        childNodes.remove(nodeIndex);
+
+        // If it's an inner node, merge child nodes as well
+        if (!leftNode.isLeaf()) {
+            leftNode.childNodes.addAll(node.childNodes);
+        }
+
+        // Write the nodes, delete bNode from persistent storage
+        writeNodes(leftNode, this);
+        dal.deleteNode(node.pageNum);
+    }
+
+    public void rebalanceRemove(Node unbalancedNode, int unbalancedNodeIndex) throws Exception {
+        Node parentNode = this;
+
+        // Right rotate
+        if (unbalancedNodeIndex != 0) {
+            Node leftNode = getNode(parentNode.childNodes.get(unbalancedNodeIndex - 1));
+            if (leftNode.canSpareAnElement()) {
+                rotateRight(leftNode, parentNode, unbalancedNode, unbalancedNodeIndex);
+                writeNodes(leftNode, parentNode, unbalancedNode);
+                return;
+            }
+        }
+
+        // Left Balance
+        if (unbalancedNodeIndex != parentNode.childNodes.size() - 1) {
+            Node rightNode = getNode(parentNode.childNodes.get(unbalancedNodeIndex + 1));
+            if (rightNode.canSpareAnElement()) {
+                rotateLeft(unbalancedNode, parentNode, rightNode, unbalancedNodeIndex);
+                writeNodes(unbalancedNode, parentNode, rightNode);
+                return;
+            }
+        }
+
+        // Merge logic
+        if (unbalancedNodeIndex == 0) {
+            Node rightNode = getNode(childNodes.get(unbalancedNodeIndex + 1));
+            parentNode.merge(rightNode, unbalancedNodeIndex + 1);
+        } else {
+            parentNode.merge(unbalancedNode, unbalancedNodeIndex);
+        }
+    }
+
+    private boolean isFirst(int index) {
+        return index == 0;
+    }
+
+    private boolean isLast(int index) {
+        return index == items.size() - 1;
+    }
+
+    public boolean canSpareAnElement() {
+        int splitIndex = dal.getSplitIndex(this);
+        return splitIndex != -1;
     }
 }

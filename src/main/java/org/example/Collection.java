@@ -105,4 +105,42 @@ public class Collection {
         return nodes;
     }
 
+    public boolean remove(byte[] key) throws Exception {
+        // Find the path to the node where the deletion should happen
+        Node rootNode = dal.getNode(root);
+        Node.FindResult result = rootNode.findKey(key, true);
+        int removeItemIndex = result.getIndex();
+        Node nodeToRemoveFrom = result.getNode();
+        List<Integer> ancestorIndexes = result.getAncestorIndexes();
+
+        if (removeItemIndex == -1) {
+            return false;
+        }
+
+        if (nodeToRemoveFrom.isLeaf()) {
+            nodeToRemoveFrom.removeItemFromLeaf(removeItemIndex);
+        } else {
+            List<Integer> affectedNodes = nodeToRemoveFrom.removeItemFromInternal(removeItemIndex);
+            ancestorIndexes.addAll(affectedNodes);
+        }
+
+        List<Node> ancestors = getNodes(ancestorIndexes);
+
+        // Rebalance the nodes all the way up, excluding the root.
+        for (int i = ancestors.size() - 2; i >= 0; i--) {
+            Node parentNode = ancestors.get(i);
+            Node node = ancestors.get(i+1);
+            if (node.isUnderPopulated()) {
+                    parentNode.rebalanceRemove(node, ancestorIndexes.get(i+1));
+            }
+        }
+
+        rootNode = ancestors.get(0);
+        // If the root has no items after rebalancing and has child nodes, adjust root.
+        if (rootNode.getItems().isEmpty() && !rootNode.getChildNodes().isEmpty()) {
+            this.root = ancestors.get(1).getPageNum();
+        }
+
+        return true;
+    }
 }

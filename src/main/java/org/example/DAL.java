@@ -3,6 +3,7 @@ package org.example;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DAL {
@@ -31,6 +32,11 @@ public class DAL {
             this.file = new RandomAccessFile(path, "rw");
             this.freelist = new Freelist();
             this.meta = new Meta(freelist.getNextPage());
+
+//            collectionsNode, err := dal.writeNode(NewNodeForSerialization([]*Item{}, []pgnum{}))
+            Node collectionsNode = writeNode(new Node(new ArrayList<>(), new ArrayList<>()));
+            this.meta.setRoot(collectionsNode.getPageNum());
+
             writeFreelist();
             writeMeta();
         }
@@ -38,7 +44,7 @@ public class DAL {
 
     public void close() throws IOException {
         writeFreelist();
-        writeMeta();
+//        writeMeta();
         if (file != null) {
             file.close();
         }
@@ -48,12 +54,9 @@ public class DAL {
         return new Page(new byte[options.getPageSize()]);
     }
 
-    public Page allocateEmptyPage(long pageNum) {
-        return new Page(pageNum, new byte[options.getPageSize()]);
-    }
-
     public Page readPage(long pageNum) throws IOException {
-        Page page = allocateEmptyPage(pageNum);
+        Page page = allocateEmptyPage();
+        page.setNum(pageNum);
         long offset = pageNum * options.getPageSize();
         file.seek(offset);
         file.read(page.getData());
@@ -71,10 +74,11 @@ public class DAL {
     }
 
     public void writeMeta() throws IOException {
-        Page p = allocateEmptyPage(Meta.MetaPageNum);
-        meta.serialize(p.getData());
+        Page page = allocateEmptyPage();
+        page.setNum(Meta.MetaPageNum);
+        page.setData(meta.serialize());
 
-        writePage(p);
+        writePage(page);
     }
 
     public Meta readMeta() throws IOException {
@@ -93,12 +97,12 @@ public class DAL {
         return freelist;
     }
 
-    public Page writeFreelist() throws IOException {
-        Page p = allocateEmptyPage(meta.freelistPage);
-        p.setData(freelist.serialize());
+    public void writeFreelist() throws IOException {
+        Page page = allocateEmptyPage();
+        page.setNum(meta.freelistPage);
+        page.setData(freelist.serialize());
 
-        writePage(p);
-        return p;
+        writePage(page);
     }
 
     public void releasePage(long pageNum) {
