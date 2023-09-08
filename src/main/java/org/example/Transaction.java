@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 public class Transaction {
     private HashMap<Long, Node> dirtyNodes;
@@ -95,5 +96,56 @@ public class Transaction {
 
     public void deleteNode(Node node) {
         pagesToDelete.add(node.getPageNum());
+    }
+
+    public Collection getRootCollection() {
+        Collection rootCollection = new Collection();
+        rootCollection.setRoot(db.getDal().getMeta().getRoot());
+        rootCollection.setTransaction(this);
+        return rootCollection;
+    }
+
+    public Optional<Collection> getCollection(byte[] name) throws IOException {
+        Collection rootCollection = getRootCollection();
+        Optional<Item> item = rootCollection.find(name);
+        if (item.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Collection collection = new Collection();
+        collection.deserialize(item.get());
+        collection.setTransaction(this);
+        return Optional.of(collection);
+    }
+
+    public Collection createCollection(byte[] name) throws Constants.WriteInsideReadTransactionException, IOException {
+        if (!write) {
+            throw new Constants.WriteInsideReadTransactionException();
+        }
+
+        Node newCollectionPage = db.getDal().writeNode(new Node());
+
+        Collection newCollection = new Collection();
+        newCollection.setName(name);
+        newCollection.setRoot(newCollectionPage.getPageNum());
+        return createCollection(newCollection);
+    }
+
+    public Collection createCollection(Collection collection) throws Constants.WriteInsideReadTransactionException, IOException {
+        collection.setTransaction(this);
+        Item collectionBytes = collection.serialize();
+        Collection rootCollection = getRootCollection();
+        rootCollection.put(collection.getName(), collectionBytes.value());
+
+        return collection;
+    }
+
+    public void deleteCollection(byte[] name) throws Constants.WriteInsideReadTransactionException, IOException {
+        if (!write) {
+            throw new Constants.WriteInsideReadTransactionException();
+        }
+
+        Collection rootCollection = getRootCollection();
+        rootCollection.remove(name);
     }
 }

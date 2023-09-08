@@ -15,6 +15,7 @@ public class Node {
     private Transaction transaction;
 
     public Node() {
+        // todo
         childNodes = new ArrayList<>();
     }
 
@@ -250,21 +251,21 @@ public class Node {
         int size = 0;
         size += items.get(i).key().length;
         size += items.get(i).value().length;
-        size += Constants.pageNumSize;
+        size += Constants.PageNumSize;
 
         return size;
     }
 
     public int nodeSize() {
         int size = 0;
-        size += Constants.nodeHeaderSize;
+        size += Constants.NodeHeaderSize;
 
         for (int i = 0; i < items.size(); i++) {
             size += elementSize(i);
         }
 
         // Add last page
-        size += Constants.pageNumSize;
+        size += Constants.PageNumSize;
         return size;
     }
 

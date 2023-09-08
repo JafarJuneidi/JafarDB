@@ -33,7 +33,7 @@ public class DB {
      * @return A new DB instance.
      * @throws IOException if there's an issue opening the DB.
      */
-    public static DB open(String path, Options options) throws IOException {
+    public static DB open(String path, Options options) throws IOException, Constants.NotJafarDBFile {
         DAL dal = new DAL(path, options);
         return new DB(dal);
     }

@@ -17,27 +17,25 @@ public class DAL {
         return freelist;
     }
 
-    public DAL(String path, Options options) throws IOException {
+    public Meta getMeta() {
+        return meta;
+    }
+
+    public DAL(String path, Options options) throws IOException, Constants.NotJafarDBFile {
         this.options = options;
 
         File file = new File(path);
         if (file.exists()) {
             this.file = new RandomAccessFile(path, "rw");
-
-            try {
-                this.meta = readMeta();
-                this.freelist = readFreelist();
-            } catch (IOException e) {
-                close();  // Assuming you have a close method for DAL
-                throw e;
-            }
+            this.meta = readMeta();
+            this.freelist = readFreelist();
 
         } else {
             this.file = new RandomAccessFile(path, "rw");
             this.freelist = new Freelist();
             this.meta = new Meta(freelist.getNextPage());
 
-//            collectionsNode, err := dal.writeNode(NewNodeForSerialization([]*Item{}, []pgnum{}))
+            // collectionsNode, err := dal.writeNode(NewNodeForSerialization([]*Item{}, []pgnum{}))
             Node collectionsNode = writeNode(new Node(new ArrayList<>(), new ArrayList<>()));
             this.meta.setRoot(collectionsNode.getPageNum());
 
@@ -85,7 +83,7 @@ public class DAL {
         writePage(page);
     }
 
-    public Meta readMeta() throws IOException {
+    public Meta readMeta() throws IOException, Constants.NotJafarDBFile {
         Page p = readPage(Meta.MetaPageNum);
 
         Meta meta = new Meta();
@@ -94,7 +92,7 @@ public class DAL {
     }
 
     public Freelist readFreelist() throws IOException {
-        Page p = readPage(this.meta.freelistPage);
+        Page p = readPage(meta.getFreelistPage());
 
         Freelist freelist = new Freelist();
         freelist.deserialize(p.getData());
@@ -103,7 +101,7 @@ public class DAL {
 
     public void writeFreelist() throws IOException {
         Page page = allocateEmptyPage();
-        page.setNum(meta.freelistPage);
+        page.setNum(meta.getFreelistPage());
         page.setData(freelist.serialize());
 
         writePage(page);
@@ -141,10 +139,6 @@ public class DAL {
         releasePage(pageNum);
     }
 
-    public long getRoot() {
-        return meta.root;
-    }
-
     public float maxThreshold() {
         return options.getMaxFillPercent() * options.getPageSize();
     }
@@ -162,7 +156,7 @@ public class DAL {
     }
 
     public int getSplitIndex(Node node) {
-        int size = Constants.nodeHeaderSize;
+        int size = Constants.NodeHeaderSize;
 
         for (int i = 0; i < node.getItems().size(); i++) {
             size += node.elementSize(i);

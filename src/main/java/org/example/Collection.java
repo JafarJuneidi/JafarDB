@@ -1,32 +1,32 @@
 package org.example;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.*;
 
 public class Collection {
     private byte[] name;
     private long root;
-    private DAL dal;
+    private long counter;
     private Transaction transaction;
 
-    // Constructor
-    public Collection(byte[] name, long root, DAL dal) {
-        this.name = name;
-        this.root = root;
-        this.dal = dal;
-    }
+    public Collection() {}
 
-    public Item find(byte[] key) throws IOException {
+    public byte[] getName() { return this.name; }
+
+    public void setRoot(long root) { this.root = root; }
+    public void setTransaction(Transaction transaction) { this.transaction = transaction; }
+    public void setName(byte[] name) { this.name = name; }
+
+    public Optional<Item> find(byte[] key) throws IOException {
         Node node = transaction.getNode(root);
         var result = node.findKey(key, true);
 
         if (result.getIndex() == -1) {
-            return null;
+            return Optional.empty();
         }
-        return result.getNode().getItems().get(result.getIndex());
+        return Optional.of(result.getNode().getItems().get(result.getIndex()));
     }
 
     public void put(byte[] key, byte[] value) throws IOException, Constants.WriteInsideReadTransactionException {
@@ -148,5 +148,25 @@ public class Collection {
         }
 
         return true;
+    }
+
+    public void deserialize(Item item) {
+        this.name = item.key();
+
+        byte[] value = item.value();
+        if (value.length != 0) {
+            ByteBuffer buffer = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN);
+            this.root = buffer.getLong();
+            this.counter = buffer.getLong();
+        }
+    }
+
+    public Item serialize() {
+        // todo
+        ByteBuffer buffer = ByteBuffer.allocate(Constants.CollectionSize).order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putLong(root);
+        buffer.putLong(counter);
+
+        return new Item(name, buffer.array());
     }
 }
