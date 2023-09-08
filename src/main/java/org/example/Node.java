@@ -12,9 +12,18 @@ public class Node {
     private long pageNum;
     private List<Item> items;
     private List<Long> childNodes;
+    private Transaction transaction;
 
     public Node() {
         childNodes = new ArrayList<>();
+    }
+
+    public void setTransaction(Transaction transaction) {
+        this.transaction = transaction;
+    }
+
+    public Transaction getTransaction() {
+        return transaction;
     }
 
     public Node(List<Item> items, List<Long> childNodes) {
@@ -134,7 +143,7 @@ public class Node {
     }
 
     public Node writeNode(Node node) throws IOException {
-        return this.dal.writeNode(node);
+        return this.transaction.writeNode(node);
     }
 
     public void writeNodes(Node... nodes) throws IOException {
@@ -144,7 +153,7 @@ public class Node {
     }
 
     public Node getNode(long pageNum) throws IOException {
-        return this.dal.getNode(pageNum);
+        return this.transaction.getNode(pageNum);
     }
 
     /**
@@ -265,24 +274,24 @@ public class Node {
     }
 
     public boolean isOverPopulated() {
-        return dal.isOverPopulated(this);
+        return transaction.getDb().getDal().isOverPopulated(this);
     }
 
     public boolean isUnderPopulated() {
-        return dal.isUnderPopulated(this);
+        return transaction.getDb().getDal().isUnderPopulated(this);
     }
 
     public void split(Node nodeToSplit, int nodeToSplitIndex) throws IOException {
-        int splitIndex = nodeToSplit.dal.getSplitIndex(nodeToSplit);
+        int splitIndex = nodeToSplit.transaction.getDb().getDal().getSplitIndex(nodeToSplit);
 
         Item middleItem = nodeToSplit.getItems().get(splitIndex);
         Node newNode;
 
         if (nodeToSplit.isLeaf()) {
-            newNode = writeNode(dal.newNode(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size()), new ArrayList<>()));
+            newNode = writeNode(transaction.newNode(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size()), new ArrayList<>()));
             nodeToSplit.setItems(nodeToSplit.getItems().subList(0, splitIndex));
         } else {
-            newNode = writeNode(dal.newNode(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size()),
+            newNode = writeNode(transaction.newNode(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size()),
                     nodeToSplit.getChildNodes().subList(splitIndex + 1, nodeToSplit.getChildNodes().size())));
             nodeToSplit.setItems(nodeToSplit.getItems().subList(0, splitIndex));
             nodeToSplit.setChildNodes(nodeToSplit.getChildNodes().subList(0, splitIndex + 1));
@@ -392,7 +401,7 @@ public class Node {
         }
     }
 
-    public void merge(Node node, int nodeIndex) throws Exception {
+    public void merge(Node node, int nodeIndex) throws IOException {
         // Get the sibling node (aNode) to the left of bNode
         Node leftNode = getNode(childNodes.get(nodeIndex - 1));
 
@@ -413,10 +422,10 @@ public class Node {
 
         // Write the nodes, delete bNode from persistent storage
         writeNodes(leftNode, this);
-        dal.deleteNode(node.pageNum);
+        transaction.getDb().getDal().deleteNode(node.pageNum);
     }
 
-    public void rebalanceRemove(Node unbalancedNode, int unbalancedNodeIndex) throws Exception {
+    public void rebalanceRemove(Node unbalancedNode, int unbalancedNodeIndex) throws IOException {
         Node parentNode = this;
 
         // Right rotate
@@ -457,7 +466,7 @@ public class Node {
     }
 
     public boolean canSpareAnElement() {
-        int splitIndex = dal.getSplitIndex(this);
+        int splitIndex = transaction.getDb().getDal().getSplitIndex(this);
         return splitIndex != -1;
     }
 }

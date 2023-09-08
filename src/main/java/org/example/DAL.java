@@ -7,11 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DAL {
-    private RandomAccessFile file;
-    private Options options;
-    private Meta meta;
-    private Freelist freelist;
+    private final RandomAccessFile file;
+    private final Options options;
+    private final Meta meta;
+    private final Freelist freelist;
     private static final int pageNumSize = 8;
+
+    public Freelist getFreelist() {
+        return freelist;
+    }
 
     public DAL(String path, Options options) throws IOException {
         this.options = options;

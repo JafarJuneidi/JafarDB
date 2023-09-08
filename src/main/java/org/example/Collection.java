@@ -9,8 +9,8 @@ import java.util.List;
 public class Collection {
     private byte[] name;
     private long root;
-
     private DAL dal;
+    private Transaction transaction;
 
     // Constructor
     public Collection(byte[] name, long root, DAL dal) {
@@ -20,7 +20,7 @@ public class Collection {
     }
 
     public Item find(byte[] key) throws IOException {
-        Node node = dal.getNode(root);
+        Node node = transaction.getNode(root);
         var result = node.findKey(key, true);
 
         if (result.getIndex() == -1) {
@@ -29,17 +29,21 @@ public class Collection {
         return result.getNode().getItems().get(result.getIndex());
     }
 
-    public void put(byte[] key, byte[] value) throws IOException {
+    public void put(byte[] key, byte[] value) throws IOException, Constants.WriteInsideReadTransactionException {
+        if (!transaction.getWrite()) {
+            throw new Constants.WriteInsideReadTransactionException();
+        }
         Item item = new Item(key, value);
 
         // On first insertion, the root node does not exist, so it should be created
         Node root;
         if (this.root == 0) {
-            root = dal.writeNode(dal.newNode(Arrays.asList(item), new ArrayList<>()));
+            // todo
+            root = transaction.writeNode(transaction.newNode(Arrays.asList(item), new ArrayList<>()));
             this.root = root.getPageNum();
             return;
         } else {
-            root = dal.getNode(this.root);
+            root = transaction.getNode(this.root);
         }
 
         // Find the path to the node where the insertion should happen
@@ -57,46 +61,44 @@ public class Collection {
             // Add item to the leaf node
             nodeToInsertIn.addItem(item, insertionIndex);
         }
-        dal.writeNode(nodeToInsertIn);
+        nodeToInsertIn.writeNode(nodeToInsertIn);
 
         List<Node> ancestors = getNodes(ancestorsIndexes);
 
         // Rebalance the nodes all the way up. Start From one node before the last and go all the way up. Exclude root.
         for (int i = ancestors.size() - 2; i >= 0; i--) {
-            Node pnode = ancestors.get(i);
+            Node parentNode = ancestors.get(i);
             Node node = ancestors.get(i + 1);
             int nodeIndex = ancestorsIndexes.get(i + 1);
             if (node.isOverPopulated()) {
-                pnode.split(node, nodeIndex);
+                parentNode.split(node, nodeIndex);
             }
         }
 
         // Handle root
         Node rootNode = ancestors.get(0);
         if (rootNode.isOverPopulated()) {
+            // todo
             List<Long> list = new ArrayList<>();
             list.add(rootNode.getPageNum());
-            Node newRoot = dal.newNode(new ArrayList<>(), list);
+            Node newRoot = transaction.newNode(new ArrayList<>(), list);
             newRoot.split(rootNode, 0);
 
             // Commit newly created root
-            newRoot = dal.writeNode(newRoot);
+            newRoot = transaction.writeNode(newRoot);
             this.root = newRoot.getPageNum();
         }
     }
 
     public List<Node> getNodes(List<Integer> indexes) throws IOException {
-        Node root = dal.getNode(this.root);
-        if (root == null) {
-            return null;  // Or you could throw an exception
-        }
+        Node root = transaction.getNode(this.root);
 
         List<Node> nodes = new ArrayList<>();
         nodes.add(root);
 
         Node child = root;
         for (int i = 1; i < indexes.size(); i++) {
-            child = dal.getNode(child.getChildNodes().get(indexes.get(i)));
+            child = transaction.getNode(child.getChildNodes().get(indexes.get(i)));
             if (child == null) {
                 return null;  // Or you could throw an exception
             }
@@ -105,9 +107,13 @@ public class Collection {
         return nodes;
     }
 
-    public boolean remove(byte[] key) throws Exception {
+    public boolean remove(byte[] key) throws IOException, Constants.WriteInsideReadTransactionException {
+        if (!transaction.getWrite()) {
+            throw new Constants.WriteInsideReadTransactionException();
+        }
+
         // Find the path to the node where the deletion should happen
-        Node rootNode = dal.getNode(root);
+        Node rootNode = transaction.getNode(root);
         Node.FindResult result = rootNode.findKey(key, true);
         int removeItemIndex = result.getIndex();
         Node nodeToRemoveFrom = result.getNode();
