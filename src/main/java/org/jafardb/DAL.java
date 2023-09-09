@@ -1,4 +1,4 @@
-package org.example;
+package org.jafardb;
 
 import java.io.File;
 import java.io.IOException;
@@ -102,7 +102,7 @@ public class DAL {
     public void writeFreelist() throws IOException {
         Page page = allocateEmptyPage();
         page.setNum(meta.getFreelistPage());
-        page.setData(freelist.serialize());
+        freelist.serialize(page.getData());
 
         writePage(page);
     }

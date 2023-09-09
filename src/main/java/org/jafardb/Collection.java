@@ -1,4 +1,4 @@
-package org.example;
+package org.jafardb;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -14,6 +14,9 @@ public class Collection {
     public Collection() {}
 
     public byte[] getName() { return this.name; }
+    public long getRoot() { return this.root; }
+    public long getCounter() { return this.counter; }
+    public Transaction getTransaction() { return this.transaction; }
 
     public void setRoot(long root) { this.root = root; }
     public void setTransaction(Transaction transaction) { this.transaction = transaction; }

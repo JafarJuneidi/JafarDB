@@ -1,4 +1,4 @@
-package org.example;
+package org.jafardb;
 
 import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;

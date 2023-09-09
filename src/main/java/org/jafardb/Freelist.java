@@ -1,19 +1,27 @@
-package org.example;
+package org.jafardb;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Freelist {
     private long maxPage; // Holds the maximum page allocated. maxPage*PageSize = fileSize
-    private final List<Long> releasedPages; // Pages that were previously allocated but are now free
+    private List<Long> releasedPages; // Pages that were previously allocated but are now free
     private static final long metaPage = 0; // max metaPage used by DB, currently only page 0
 
     public Freelist() {
         this.maxPage = metaPage;
         this.releasedPages = new ArrayList<>();
     }
+
+    public long getMaxPage() { return maxPage; }
+    public List<Long> getReleasedPages() { return releasedPages; }
+
+    public void setMaxPage(long maxPage) { this.maxPage = maxPage; }
+    public void setReleasedPages(List<Long> releasedPages) { this.releasedPages = releasedPages; }
+
 
     public long getNextPage() {
         if (!releasedPages.isEmpty()) {
@@ -29,19 +37,15 @@ public class Freelist {
         releasedPages.add(page);
     }
 
-    public byte[] serialize() {
-        int pageNumSize = Long.BYTES;  // Size of a long in bytes (8 bytes)
-        ByteBuffer buf = ByteBuffer.allocate(4 + pageNumSize * releasedPages.size())
-                .order(ByteOrder.LITTLE_ENDIAN); // Little-endian order
+    public void serialize(byte[] buf) {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN);
 
-        buf.putShort((short) maxPage);  // Assuming maxPage can fit into a short
-        buf.putShort((short) releasedPages.size());  // Number of released pages
+        byteBuffer.putShort((short) maxPage);
+        byteBuffer.putShort((short) releasedPages.size());
 
-        for (long page : releasedPages) {
-            buf.putLong(page);
+        for (Long page : releasedPages) {
+            byteBuffer.putLong(page);
         }
-
-        return buf.array();
     }
 
     public void deserialize(byte[] data) {
@@ -54,6 +58,14 @@ public class Freelist {
         for (int i = 0; i < releasedPagesCount; i++) {
             releasedPages.add(buf.getLong());
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Freelist freelist = (Freelist) o;
+        return maxPage == freelist.maxPage && Objects.equals(releasedPages, freelist.releasedPages);
     }
 }
 

@@ -1,4 +1,4 @@
-package org.example;
+package org.jafardb;
 
 public class Constants {
     public static final int PageNumSize = 8;
