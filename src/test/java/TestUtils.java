@@ -11,14 +11,14 @@ import java.util.UUID;
 public class TestUtils {
 
     public static final int TEST_PAGE_SIZE = 4096;
-    private static final float TEST_MIN_PERCENTAGE = 0.2F;
-    private static final float TEST_MAX_PERCENTAGE = 0.55F;
+    public static final float TEST_MIN_PERCENTAGE = 0.2F;
+    public static final float TEST_MAX_PERCENTAGE = 0.55F;
     private static final int TEST_VAL_SIZE = 255;
 
-    private static final int MOCK_NUMBER_OF_ELEMENTS = 10;
+    public static final int MOCK_NUMBER_OF_ELEMENTS = 10;
     private static final String EXPECTED_FOLDER_PATH = "expected";
 
-    private static final byte[] TEST_COLLECTION_NAME = "test1".getBytes();
+    public static final byte[] TEST_COLLECTION_NAME = "test1".getBytes();
 
     public static DB createTestDB() throws IOException, Constants.NotJafarDBFile {
         return DB.open(getTempFileName(), new Options(TEST_PAGE_SIZE, TEST_MIN_PERCENTAGE, TEST_MAX_PERCENTAGE));

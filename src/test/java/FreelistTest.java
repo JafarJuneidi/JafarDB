@@ -1,14 +1,11 @@
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
 import org.jafardb.Freelist;
-import org.jafardb.Page;
 import org.junit.jupiter.api.Test;
 
 class FreelistTest {
@@ -20,14 +17,14 @@ class FreelistTest {
         byte[] actual = new byte[TestUtils.TEST_PAGE_SIZE];
         freelist.serialize(actual);
 
-        byte[] expected = Files.readAllBytes(Paths.get(getExpectedResultFileName("TestFreelistSerialize")));
+        byte[] expected = Files.readAllBytes(Paths.get(TestUtils.getExpectedResultFileName("TestFreelistSerialize")));
 
         assertArrayEquals(expected, actual);
     }
 
     @Test
     void testFreelistDeserialize() throws Exception {
-        byte[] freelistData = Files.readAllBytes(Paths.get(getExpectedResultFileName("TestFreelistDeserialize")));
+        byte[] freelistData = Files.readAllBytes(Paths.get(TestUtils.getExpectedResultFileName("TestFreelistDeserialize")));
 
         Freelist actual = new Freelist();
         actual.deserialize(freelistData);
@@ -37,9 +34,5 @@ class FreelistTest {
         expected.setReleasedPages(Arrays.asList(1L, 2L, 3L));
 
         assertEquals(expected, actual);
-    }
-
-    private String getExpectedResultFileName(String testName) {
-        return "expected/" + testName;
     }
 }

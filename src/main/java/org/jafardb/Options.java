@@ -8,14 +8,14 @@ public class Options {
     public int getPageSize() {
         return pageSize;
     }
-
     public float getMinFillPercent() {
         return minFillPercent;
     }
-
     public float getMaxFillPercent() {
         return maxFillPercent;
     }
+
+    public void setPageSize(int pageSize) { this.pageSize = pageSize; }
 
     public Options() {}
 

@@ -2,6 +2,7 @@ package org.jafardb;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Objects;
 
 public class Meta {
     // The database has a root collection that holds all the collections in the database. It is called root and the
@@ -22,17 +23,16 @@ public class Meta {
     }
 
     public void setRoot(long root) { this.root = root; }
+    public void setFreelistPage(long freelistPage) { this.freelistPage = freelistPage; }
 
     public long getRoot() { return root; }
     public long getFreelistPage() { return freelistPage; }
 
-    public byte[] serialize() {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
+    public void serialize(byte[] buff) {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(buff).order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.putInt(MagicNumber);
         byteBuffer.putLong(root);
         byteBuffer.putLong(freelistPage);
-
-        return byteBuffer.array();
     }
 
     public void deserialize(byte[] data) throws Constants.NotJafarDBFile {
@@ -43,5 +43,13 @@ public class Meta {
         }
         this.root = byteBuffer.getLong();
         this.freelistPage = byteBuffer.getLong();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Meta meta = (Meta) o;
+        return freelistPage == meta.freelistPage && root == meta.root;
     }
 }

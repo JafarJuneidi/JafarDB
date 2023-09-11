@@ -6,6 +6,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class Node {
     private DAL dal;
@@ -15,8 +16,8 @@ public class Node {
     private Transaction transaction;
 
     public Node() {
-        // todo
-        childNodes = new ArrayList<>();
+        this.items = new ArrayList<>();
+        this.childNodes = new ArrayList<>();
     }
 
     public void setTransaction(Transaction transaction) {
@@ -44,7 +45,7 @@ public class Node {
         return childNodes.isEmpty();
     }
 
-    public byte[] serialize(byte[] buf) {
+    public void serialize(byte[] buf) {
         int leftPos = 0;
         int rightPos = buf.length - 1;
 
@@ -88,8 +89,6 @@ public class Node {
             long lastChildNode = childNodes.get(childNodes.size() - 1);
             ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN).putLong(leftPos, lastChildNode);
         }
-
-        return buf;
     }
 
     public void deserialize(byte[] buf) {
@@ -289,13 +288,14 @@ public class Node {
         Node newNode;
 
         if (nodeToSplit.isLeaf()) {
-            newNode = writeNode(transaction.newNode(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size()), new ArrayList<>()));
-            nodeToSplit.setItems(nodeToSplit.getItems().subList(0, splitIndex));
+            newNode = writeNode(transaction.newNode(
+                    new ArrayList<>(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size())), new ArrayList<>()));
+            nodeToSplit.setItems(new ArrayList<>(nodeToSplit.getItems().subList(0, splitIndex)));
         } else {
-            newNode = writeNode(transaction.newNode(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size()),
-                    nodeToSplit.getChildNodes().subList(splitIndex + 1, nodeToSplit.getChildNodes().size())));
-            nodeToSplit.setItems(nodeToSplit.getItems().subList(0, splitIndex));
-            nodeToSplit.setChildNodes(nodeToSplit.getChildNodes().subList(0, splitIndex + 1));
+            newNode = writeNode(transaction.newNode(new ArrayList<>(nodeToSplit.getItems().subList(splitIndex + 1, nodeToSplit.getItems().size())),
+                    new ArrayList<>(nodeToSplit.getChildNodes().subList(splitIndex + 1, nodeToSplit.getChildNodes().size()))));
+            nodeToSplit.setItems(new ArrayList<>(nodeToSplit.getItems().subList(0, splitIndex)));
+            nodeToSplit.setChildNodes(new ArrayList<>(nodeToSplit.getChildNodes().subList(0, splitIndex + 1)));
         }
 
         addItem(middleItem, nodeToSplitIndex);
@@ -469,5 +469,13 @@ public class Node {
     public boolean canSpareAnElement() {
         int splitIndex = transaction.getDb().getDal().getSplitIndex(this);
         return splitIndex != -1;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Node node = (Node) o;
+        return pageNum == node.pageNum  && Objects.equals(items, node.items) && Objects.equals(childNodes, node.childNodes);
     }
 }

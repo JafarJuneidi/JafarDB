@@ -85,7 +85,7 @@ public class Transaction {
     }
 
     public Node getNode(long pageNum) throws IOException {
-        if (dirtyNodes.containsKey(pageNum)) {
+        if (dirtyNodes != null && dirtyNodes.containsKey(pageNum)) {
             return dirtyNodes.get(pageNum);
         }
 

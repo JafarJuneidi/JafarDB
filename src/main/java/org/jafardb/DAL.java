@@ -78,7 +78,7 @@ public class DAL {
     public void writeMeta() throws IOException {
         Page page = allocateEmptyPage();
         page.setNum(Meta.MetaPageNum);
-        page.setData(meta.serialize());
+        meta.serialize(page.getData());
 
         writePage(page);
     }
@@ -129,7 +129,7 @@ public class DAL {
             page.setNum(node.getPageNum());
         }
 
-        page.setData(node.serialize(page.getData()));
+        node.serialize(page.getData());
 
         writePage(page);
         return node;

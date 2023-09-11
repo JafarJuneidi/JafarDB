@@ -13,6 +13,11 @@ public class Collection {
 
     public Collection() {}
 
+    public Collection(byte[] name, long root) {
+        this.name = name;
+        this.root = root;
+    }
+
     public byte[] getName() { return this.name; }
     public long getRoot() { return this.root; }
     public long getCounter() { return this.counter; }
@@ -21,6 +26,7 @@ public class Collection {
     public void setRoot(long root) { this.root = root; }
     public void setTransaction(Transaction transaction) { this.transaction = transaction; }
     public void setName(byte[] name) { this.name = name; }
+    public void setCounter(long counter) { this.counter = counter; }
 
     public Optional<Item> find(byte[] key) throws IOException {
         Node node = transaction.getNode(root);
@@ -42,7 +48,9 @@ public class Collection {
         Node root;
         if (this.root == 0) {
             // todo
-            root = transaction.writeNode(transaction.newNode(Arrays.asList(item), new ArrayList<>()));
+            List<Item> newItems = new ArrayList<>();
+            newItems.add(item);
+            root = transaction.writeNode(transaction.newNode(newItems, new ArrayList<>()));
             this.root = root.getPageNum();
             return;
         } else {
