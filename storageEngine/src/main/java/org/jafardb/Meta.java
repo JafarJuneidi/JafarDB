@@ -2,7 +2,6 @@ package org.jafardb;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Objects;
 
 public class Meta {
     // The database has a root collection that holds all the collections in the database. It is called root and the

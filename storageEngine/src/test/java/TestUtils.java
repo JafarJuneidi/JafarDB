@@ -16,7 +16,7 @@ public class TestUtils {
     private static final int TEST_VAL_SIZE = 255;
 
     public static final int MOCK_NUMBER_OF_ELEMENTS = 10;
-    private static final String EXPECTED_FOLDER_PATH = "expected";
+    private static final String EXPECTED_FOLDER_PATH = "../expected";
 
     public static final byte[] TEST_COLLECTION_NAME = "test1".getBytes();
 

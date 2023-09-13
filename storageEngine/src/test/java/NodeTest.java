@@ -1,11 +1,9 @@
 import org.jafardb.*;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class NodeTest {
     @Test
