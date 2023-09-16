@@ -1,3 +1,6 @@
 rootProject.name = 'JafarDB'
-include 'storageEngine'
+include 'StorageEngine'
+include 'WireProtocol'
+include 'Driver'
+include 'Driver'
 

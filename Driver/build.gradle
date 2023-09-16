@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group = 'org.example'
+group = 'org.jafar'
 version = '1.0-SNAPSHOT'
 
 repositories {
@@ -14,7 +14,6 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     implementation project(path: ':WireProtocol')
-    implementation project(path: ':StorageEngine')
 }
 
 test {

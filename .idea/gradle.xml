@@ -9,7 +9,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/storageEngine" />
+            <option value="$PROJECT_DIR$/Driver" />
+            <option value="$PROJECT_DIR$/StorageEngine" />
+            <option value="$PROJECT_DIR$/WireProtocol" />
           </set>
         </option>
       </GradleProjectSettings>
