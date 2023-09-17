@@ -2,5 +2,3 @@ rootProject.name = 'JafarDB'
 include 'StorageEngine'
 include 'WireProtocol'
 include 'Driver'
-include 'Driver'
-

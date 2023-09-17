@@ -15,6 +15,16 @@
           </set>
         </option>
       </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Client" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Client" />
+            <option value="$PROJECT_DIR$/Driver" />
+            <option value="$PROJECT_DIR$/WireProtocol" />
+          </set>
+        </option>
+      </GradleProjectSettings>
     </option>
   </component>
 </project>

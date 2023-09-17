@@ -28,7 +28,6 @@ public class DBServerWithEventLoop {
         requestQueue = new LinkedBlockingQueue<>();
         responseQueue = new LinkedBlockingQueue<>();
         objectMapper = new ObjectMapper();
-        // Initialize your database here.
     }
 
     public void start() {
