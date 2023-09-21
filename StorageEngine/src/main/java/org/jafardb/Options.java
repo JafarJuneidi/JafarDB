@@ -1,9 +1,9 @@
 package org.jafardb;
 
 public class Options {
-    private int pageSize = 4096;
-    private float minFillPercent = 0.0125F;
-    private float maxFillPercent = 0.025F;
+    private int pageSize = 16384;
+    private float minFillPercent = 0.5F;
+    private float maxFillPercent = 0.95F;
 
     public int getPageSize() {
         return pageSize;

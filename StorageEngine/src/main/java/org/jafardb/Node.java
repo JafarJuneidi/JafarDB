@@ -3,10 +3,7 @@ package org.jafardb;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Node {
     private DAL dal;
@@ -222,6 +219,14 @@ public class Node {
             return new FindResult(-1, null, ancestorIndexes);
         }
         return result;
+    }
+
+    public void findAll(List<Item> items) throws IOException {
+        items.addAll(this.items);
+        for (Long childNode: childNodes) {
+            Node node = getNode(childNode);
+            node.findAll(items);
+        }
     }
 
     private FindResult findKeyHelper(Node node, byte[] key, boolean exact, List<Integer> ancestorsIndexes) throws IOException {

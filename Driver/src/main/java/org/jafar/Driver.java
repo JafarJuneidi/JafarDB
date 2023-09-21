@@ -1,9 +1,10 @@
 package org.jafar;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.io.*;
 import java.net.Socket;
 
 public class Driver {
@@ -19,60 +20,62 @@ public class Driver {
         this.objectMapper = new ObjectMapper();
     }
 
-    public <T> Response insert(T obj) throws IOException {
-        return sendToDb(obj, WireProtocol.OperationType.INSERT);
+    public String createDatabase(String databaseName) throws IOException {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("name", databaseName);
+        objectNode = sendToDb(objectNode, WireProtocol.OperationType.CREATE_DB);
+        return objectNode.get("response").asText();
     }
 
-    public <T> Response update(T obj) throws IOException {
-        return sendToDb(obj, WireProtocol.OperationType.UPDATE);
+    public String createCollection(String collectionName) throws IOException {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("name", collectionName);
+        objectNode = sendToDb(objectNode, WireProtocol.OperationType.CREATE_COLLECTION);
+        return objectNode.get("response").asText();
     }
 
-    public <T> Response delete(T obj) throws IOException {
-        return sendToDb(obj, WireProtocol.OperationType.DELETE);
+    public String deleteCollection(String collectionName) throws IOException {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("name", collectionName);
+        objectNode = sendToDb(objectNode, WireProtocol.OperationType.DELETE_COLLECTION);
+        return objectNode.get("response").asText();
+    }
+    public String getAllCollections() throws IOException {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode = sendToDb(objectNode, WireProtocol.OperationType.SHOW_COLLECTIONS);
+        return objectNode.get("response").toString();
     }
 
-    public <T> Response get(Class<T> clazz) throws IOException {
+    public String insert(String collectionName, ObjectNode obj) throws IOException {
+        ObjectNode objectNode = sendToDb(obj, WireProtocol.OperationType.INSERT);
+        return objectNode.get("response").asText();
+    }
+
+    public ObjectNode update(ObjectNode objectNode) throws IOException {
+        return sendToDb(objectNode, WireProtocol.OperationType.UPDATE);
+    }
+
+    public ObjectNode delete(ObjectNode objectNode) throws IOException {
+        return sendToDb(objectNode, WireProtocol.OperationType.DELETE);
+    }
+
+    public ObjectNode get() throws IOException {
         return sendToDb(null, WireProtocol.OperationType.QUERY);
     }
 
-    private <T> Response sendToDb(T obj, WireProtocol.OperationType operationType) throws IOException {
-        byte[] jsonData = obj != null ? objectMapper.writeValueAsBytes(obj) : new byte[0];
-        WireProtocol.Header header = new WireProtocol.Header(operationType, jsonData.length);
-
-        byte[] message = combine(header, jsonData);
-        out.write(message);
-
-        return receiveResponse();
+    public JsonNode getAll(String collectionName) throws IOException {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode = sendToDb(objectNode, WireProtocol.OperationType.QUERY);
+        return objectNode.get("response");
     }
 
-    private byte[] combine(WireProtocol.Header header, byte[] jsonData) throws IOException {
-        byte[] headerData = serializeHeader(header);
-        byte[] combined = new byte[headerData.length + jsonData.length];
-        System.arraycopy(headerData, 0, combined, 0, headerData.length);
-        System.arraycopy(jsonData, 0, combined, headerData.length, jsonData.length);
-        return combined;
-    }
+    private ObjectNode sendToDb(ObjectNode obj, WireProtocol.OperationType operationType) throws IOException {
+        byte[] jsonData = obj != null ? objectMapper.writeValueAsBytes(obj): new byte[0];
+        WireProtocol.Message message = WireProtocol.createMessage(operationType, jsonData);
 
-    private Response receiveResponse() throws IOException {
-        // For the sake of demonstration, assuming that the response is also a WireProtocol message.
-        byte[] responseHeaderData = new byte[2]; /* size of header (short) */
-        in.read(responseHeaderData);
-        WireProtocol.Header responseHeader = deserializeHeader(responseHeaderData);
-
-        byte[] payload = new byte[responseHeader.getPayloadLength()];
-        in.read(payload);
-
-        return new Response(responseHeader, payload);
-    }
-
-    private byte[] serializeHeader(WireProtocol.Header header) {
-        // Serialize the header into bytes. This is a placeholder; you might need to implement the actual logic.
-        return new byte[0];  // Placeholder
-    }
-
-    private WireProtocol.Header deserializeHeader(byte[] data) {
-        // Deserialize the bytes into a WireProtocol.Header object. Placeholder for now.
-        return null;  // Placeholder
+        out.write(message.serialize());
+        message = WireProtocol.createMessage(in);
+        return (ObjectNode) objectMapper.readTree(message.getPayload());
     }
 
     public void close() throws IOException {

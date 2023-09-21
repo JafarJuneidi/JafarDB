@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Collection {
     private byte[] name;
@@ -36,6 +37,13 @@ public class Collection {
             return Optional.empty();
         }
         return Optional.of(result.getNode().getItems().get(result.getIndex()));
+    }
+
+    public List<Item> findAll() throws IOException {
+        Node rootNode = transaction.getNode(root);
+        List<Item> items = new LinkedList<>();
+        rootNode.findAll(items);
+        return items;
     }
 
     public void put(byte[] key, byte[] value) throws IOException, Constants.WriteInsideReadTransactionException {

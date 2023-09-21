@@ -35,8 +35,7 @@ public class DAL {
             this.freelist = new Freelist();
             this.meta = new Meta(freelist.getNextPage());
 
-            // collectionsNode, err := dal.writeNode(NewNodeForSerialization([]*Item{}, []pgnum{}))
-            Node collectionsNode = writeNode(new Node(new ArrayList<>(), new ArrayList<>()));
+            Node collectionsNode = writeNode(new Node());
             this.meta.setRoot(collectionsNode.getPageNum());
 
             writeFreelist();

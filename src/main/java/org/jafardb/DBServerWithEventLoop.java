@@ -69,8 +69,8 @@ public class DBServerWithEventLoop {
     private void processRequest(RequestTask task) {
         // Handle the request from the client (e.g., read the message, interact with the DB, etc.)
         // Once the request is processed, put the result in the response queue
-        ResponseTask responseTask = /* ... */;
-        responseQueue.put(responseTask);
+//        ResponseTask responseTask = /* ... */;
+//        responseQueue.put(responseTask);
     }
 
     private void sendResponse(ResponseTask task) {
@@ -98,7 +98,7 @@ public class DBServerWithEventLoop {
 
     private void handleClient(Socket clientSocket) {
         try (InputStream in = clientSocket.getInputStream(); OutputStream out = clientSocket.getOutputStream()) {
-            byte[] headerData = new byte[/* size of your header */];
+            byte[] headerData = new byte[4]; // size of head
             in.read(headerData);
             WireProtocol.Header header = deserializeHeader(headerData);
 
@@ -120,18 +120,18 @@ public class DBServerWithEventLoop {
 
     private byte[] processMessage(WireProtocol.Header header, byte[] payload) {
         switch (header.getOperationType()) {
-            case INSERT:
-                // Handle insert
-                return database.insert(payload);
-            case UPDATE:
-                // Handle update
-                return database.update(payload);
-            case DELETE:
-                // Handle delete
-                return database.delete(payload);
-            case QUERY:
-                // Handle query
-                return database.query(payload);
+//            case INSERT:
+//                // Handle insert
+//                return database.insert(payload);
+//            case UPDATE:
+//                // Handle update
+//                return database.update(payload);
+//            case DELETE:
+//                // Handle delete
+//                return database.delete(payload);
+//            case QUERY:
+//                // Handle query
+//                return database.query(payload);
             default:
                 // Handle other cases or unknown operations
                 return new byte[0];

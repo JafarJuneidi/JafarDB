@@ -140,12 +140,12 @@ public class Transaction {
         return collection;
     }
 
-    public void deleteCollection(byte[] name) throws Constants.WriteInsideReadTransactionException, IOException {
+    public boolean deleteCollection(byte[] name) throws Constants.WriteInsideReadTransactionException, IOException {
         if (!write) {
             throw new Constants.WriteInsideReadTransactionException();
         }
 
         Collection rootCollection = getRootCollection();
-        rootCollection.remove(name);
+        return rootCollection.remove(name);
     }
 }
