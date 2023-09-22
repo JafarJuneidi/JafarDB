@@ -1,4 +1,4 @@
-package org.jafardb;
+package org.jafar;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

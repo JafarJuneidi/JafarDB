@@ -2,13 +2,11 @@ package org.jafar;
 import java.io.IOException;
 import java.util.Scanner;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Shell {
-
     private String currentDatabase = null;
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static Driver driver;

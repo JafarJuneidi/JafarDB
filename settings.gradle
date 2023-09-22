@@ -3,4 +3,5 @@ include 'StorageEngine'
 include 'WireProtocol'
 include 'Driver'
 include 'Shell'
+include 'DBFrontend'
 

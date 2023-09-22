@@ -1,16 +1,17 @@
-package org.jafardb;
+package org.jafar;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.jafar.WireProtocol;
+import org.jafar.WireProtocol.*;
+import org.jafardb.Constants;
 
 import java.io.*;
 import java.net.*;
 import java.util.List;
 
-public class SimpleServer {
+public class Server {
     private static final int PORT = 12345;
 
     public static void main(String[] args) {

@@ -1,7 +1,7 @@
-package org.jafardb;
+package org.jafar;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jafar.WireProtocol;
+import org.jafardb.DB;
 
 import java.io.InputStream;
 import java.io.OutputStream;

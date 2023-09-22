@@ -1,9 +1,10 @@
-package org.jafardb;
+package org.jafar;
 
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.jafardb.*;
 
 import java.io.IOException;
 import java.util.List;
