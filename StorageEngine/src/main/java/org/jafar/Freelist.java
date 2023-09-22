@@ -1,4 +1,4 @@
-package org.jafardb;
+package org.jafar;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  bootstrap:
+    build:
+      context: .
+      dockerfile: BootstrapDockerfile
+    ports:
+      - "8888:8888"
+
+  node1:
+    build:
+      context: .
+      dockerfile: NodeDockerfile
+    volumes:
+      - data1:/app/data
+    ports:
+      - "9001:9000"
+    environment:
+      - SERVICE_NAME=jafardb-node1-1
+
+  node2:
+    build:
+      context: .
+      dockerfile: NodeDockerfile
+    volumes:
+      - data2:/app/data
+    ports:
+      - "9002:9000"
+    environment:
+      - SERVICE_NAME=jafardb-node2-1
+
+volumes:
+  data1:
+  data2:

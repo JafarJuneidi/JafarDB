@@ -1,4 +1,4 @@
-package org.jafardb;
+package org.jafar;
 
 public class Options {
     private int pageSize = 16384;

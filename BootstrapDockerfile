@@ -1,0 +1,13 @@
+FROM gradle:jdk17 as build
+WORKDIR /workspace
+
+COPY --chown=gradle:gradle . /workspace
+
+RUN gradle :Bootstrap:build --no-daemon
+
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+
+COPY --from=build /workspace/Bootstrap/build/libs/Bootstrap-1.0-SNAPSHOT.jar ./app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

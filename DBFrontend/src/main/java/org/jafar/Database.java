@@ -1,10 +1,8 @@
 package org.jafar;
 
-import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.jafardb.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,7 +16,7 @@ public class Database {
 
 
     public Database(String path) throws IOException, Constants.NotJafarDBFile {
-        db = DB.open(path + ".db", new Options());
+        db = DB.open("data/" + path + ".db", new Options());
         objectMapper = new ObjectMapper();
     }
 

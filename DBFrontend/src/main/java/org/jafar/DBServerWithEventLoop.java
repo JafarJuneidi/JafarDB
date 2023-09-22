@@ -1,7 +1,6 @@
 package org.jafar;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jafardb.DB;
 
 import java.io.InputStream;
 import java.io.OutputStream;

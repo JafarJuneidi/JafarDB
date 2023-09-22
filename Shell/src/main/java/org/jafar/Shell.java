@@ -11,6 +11,14 @@ public class Shell {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static Driver driver;
 
+    public Shell(String host, int port) {
+        try {
+            driver = new Driver(host, port);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void useDatabase(String dbName) {
         String response;
         try {
@@ -125,15 +133,5 @@ public class Shell {
         System.out.println("Parsed JSON: " + jsonNode.toString());
 
         return (ObjectNode) jsonNode;
-    }
-
-    public static void main(String[] args) {
-        try {
-            driver = new Driver("localhost", 12345);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        Shell shell = new Shell();
-        shell.start();
     }
 }

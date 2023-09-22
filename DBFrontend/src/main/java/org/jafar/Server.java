@@ -4,26 +4,38 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.jafar.WireProtocol.*;
-import org.jafardb.Constants;
 
 import java.io.*;
 import java.net.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class Server {
-    private static final int PORT = 12345;
+    private static final int PORT = 9000;
+    private static final String myHost = System.getenv("SERVICE_NAME");
+    private final String[] hosts = {"jafardb-node1-1", "jafardb-node2-1"};
+    private final Map<String, Socket> sockets = new HashMap<>();
 
-    public static void main(String[] args) {
+    public void connectToHosts() throws IOException {
+        for (String host: hosts) {
+            if (Objects.equals(host, myHost)) continue;
+            sockets.put(host, new Socket(host, PORT));
+        }
+    }
+
+    public void start() {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server started on port: " + PORT);
+            System.out.println("Node started on: " + myHost + ":" + serverSocket.getLocalPort());
+            connectToHosts();
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Accepted connection from: " + clientSocket.getInetAddress());
 
                 // Spawn a new thread to handle this client
-                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                ClientHandler clientHandler = new ClientHandler(clientSocket, myHost, sockets);
                 new Thread(clientHandler).start();
             }
         } catch (IOException e) {
@@ -36,10 +48,14 @@ class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final ObjectMapper objectMapper;
     private Database database;
+    private final String myHost;
+    private final Map<String, Socket> sockets;
 
-    public ClientHandler(Socket clientSocket) {
+    public ClientHandler(Socket clientSocket, String myHost, Map<String, Socket> sockets) {
         this.clientSocket = clientSocket;
         this.objectMapper = new ObjectMapper();
+        this.myHost = myHost;
+        this.sockets = sockets;
     }
 
     @Override
@@ -63,6 +79,7 @@ class ClientHandler implements Runnable {
                     case CREATE_DB -> {
                         try {
                             database = new Database(objectNode.get("name").asText());
+                            broadcast(message);
                             objectNode = objectMapper.createObjectNode();
                             objectNode.put("response", "Database Added successfully");
                         } catch (IOException | Constants.NotJafarDBFile e) {
@@ -75,6 +92,7 @@ class ClientHandler implements Runnable {
                     case CREATE_COLLECTION -> {
                         try {
                             database.createCollection(objectNode.get("name").asText());
+                            broadcast(message);
                             objectNode = objectMapper.createObjectNode();
                             objectNode.put("response", "Collection Added successfully");
                         } catch (Constants.WriteInsideReadTransactionException e) {
@@ -90,6 +108,7 @@ class ClientHandler implements Runnable {
                             objectNode = objectMapper.createObjectNode();
                             if (result) {
                                 objectNode.put("response", "Collection deleted successfully");
+                                broadcast(message);
                             } else {
                                 objectNode.put("response", "Failed to delete collection");
                             }
@@ -111,6 +130,7 @@ class ClientHandler implements Runnable {
                     case INSERT -> {
                         try {
                             database.insertDocument(objectNode, "users");
+                            broadcast(message);
                             objectNode = objectMapper.createObjectNode();
                             objectNode.put("response", "Document Added successfully");
                         } catch (Constants.WriteInsideReadTransactionException e) {
@@ -123,6 +143,7 @@ class ClientHandler implements Runnable {
                     case UPDATE -> {
                         try {
                             database.updateDocument(objectNode, "users");
+                            broadcast(message);
                             objectNode = objectMapper.createObjectNode();
                             objectNode.put("response", "Document Added successfully");
                         } catch (Constants.WriteInsideReadTransactionException e) {
@@ -151,6 +172,15 @@ class ClientHandler implements Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public void broadcast(WireProtocol.Message message) throws IOException {
+        for (Map.Entry<String, Socket> entry: sockets.entrySet()) {
+            if (Objects.equals(entry.getKey(), myHost)) continue;
+
+            OutputStream forwardOut = entry.getValue().getOutputStream();
+            forwardOut.write(message.serialize());
         }
     }
 }

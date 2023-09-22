@@ -1,4 +1,4 @@
-package org.jafardb;
+package org.jafar;
 
 public class Page {
     private long num;

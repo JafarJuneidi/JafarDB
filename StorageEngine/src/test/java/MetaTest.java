@@ -1,5 +1,5 @@
-import org.jafardb.Constants;
-import org.jafardb.Meta;
+import org.jafar.Constants;
+import org.jafar.Meta;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

@@ -9,6 +9,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Bootstrap" />
             <option value="$PROJECT_DIR$/DBFrontend" />
             <option value="$PROJECT_DIR$/Driver" />
             <option value="$PROJECT_DIR$/Shell" />

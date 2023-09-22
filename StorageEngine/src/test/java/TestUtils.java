@@ -1,4 +1,4 @@
-import org.jafardb.*;
+import org.jafar.*;
 
 import java.io.IOException;
 import java.nio.file.Paths;

@@ -1,0 +1,19 @@
+# Build stage
+FROM gradle:jdk17 as build
+WORKDIR /workspace
+
+# Copy the entire project
+COPY --chown=gradle:gradle . /workspace
+
+# Assuming DBFrontend is the module you want to build
+RUN gradle :DBFrontend:shadowJar --no-daemon
+
+# Run stage
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+
+# Copy the built artifact from the build stage
+COPY --from=build /workspace/DBFrontend/build/libs/DBFrontend.jar ./app.jar
+
+# Command to run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]

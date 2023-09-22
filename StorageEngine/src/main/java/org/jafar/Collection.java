@@ -1,10 +1,9 @@
-package org.jafardb;
+package org.jafar;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Collection {
     private byte[] name;

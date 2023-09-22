@@ -4,4 +4,5 @@ include 'WireProtocol'
 include 'Driver'
 include 'Shell'
 include 'DBFrontend'
+include 'Bootstrap'
 
