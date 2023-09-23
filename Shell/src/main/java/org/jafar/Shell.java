@@ -19,62 +19,67 @@ public class Shell {
         }
     }
 
-    private void useDatabase(String dbName) {
-        String response;
+    private String useDatabase(String dbName) {
         try {
-            response = driver.createDatabase(dbName);
+            return driver.createDatabase(dbName);
         } catch (IOException e) {
-            response = "Driver failed to send message";
+            return "Driver failed to send message";
         }
-        System.out.println(response);
     }
 
-    private void createCollection(String collectionName) {
-        String response;
+    private String createCollection(String collectionName, ObjectNode jsonNode) {
         try {
-            response = driver.createCollection(collectionName);
+            return driver.createCollection(collectionName, jsonNode);
         } catch (IOException e) {
-            response = "Driver failed to send message";
+            return "Driver failed to send message";
         }
-        System.out.println(response);
     }
 
-    private void deleteCollection(String collectionName) {
-        String response;
+    private String deleteDatabase(String databaseName) {
         try {
-            response = driver.deleteCollection(collectionName);
+            return driver.deleteDatabase(databaseName);
         } catch (IOException e) {
-            response = "Driver failed to send message";
+            return "Driver failed to send message";
         }
-        System.out.println(response);
     }
 
-    private void showCollections() {
-        String response;
+    private String deleteCollection(String collectionName) {
         try {
-            response = driver.getAllCollections();
+            return driver.deleteCollection(collectionName);
         } catch (IOException e) {
-            response = "Driver failed to send message";
+            return "Driver failed to send message";
         }
-        System.out.println(response);
     }
 
-    private void insertIntoCollection(String collectionName, ObjectNode json) {
-        String response;
+    private String showDatabases() {
         try {
-            response = driver.insert(collectionName, json);
+            return driver.getAllDatabases();
         } catch (IOException e) {
-            response = "Driver failed to send message";
+            return "Driver failed to send message";
         }
-        System.out.println(response);
     }
 
-    public void getAllFromCollection(String collectionName) {
+    private String showCollections() {
         try {
-            JsonNode response = driver.getAll(collectionName);
-            System.out.println(response);
+            return driver.getAllCollections();
         } catch (IOException e) {
-            System.out.println("Driver failed to send message");
+            return "Driver failed to send message";
+        }
+    }
+
+    private String insertIntoCollection(String collectionName, ObjectNode json) {
+        try{
+            return driver.insert(collectionName, json);
+        } catch (IOException e) {
+            return "Driver failed to send message";
+        }
+    }
+
+    public String getAllFromCollection(String collectionName) {
+        try {
+            return driver.getAll(collectionName).toString();
+        } catch (IOException e) {
+            return "Driver failed to send message";
         }
     }
 
@@ -90,22 +95,29 @@ public class Shell {
             if (command.equalsIgnoreCase("exit")) {
                 System.out.println("Exiting SimpleDB Shell...");
                 break;
+            } else if (command.startsWith("show databases")) {
+                System.out.println(showDatabases());
             } else if (command.startsWith("use database ")) {
-                useDatabase(command.split(" ")[2]);
+                System.out.println(useDatabase(command.split(" ")[2]));
+            } else if (command.startsWith("delete database ")) {
+                System.out.println(deleteDatabase(command.split(" ")[2]));
+            } else if (command.startsWith("show collections")) {
+                System.out.println(showCollections());
             } else if (command.startsWith("create collection ")) {
-                createCollection(command.split(" ")[2]);
+                String collectionName = command.split(" ")[2];
+                ObjectNode jsonNode = parseJson(scanner);
+                if (jsonNode == null) continue;
+                System.out.println(createCollection(collectionName, jsonNode));
             } else if (command.startsWith("delete collection ")) {
-                deleteCollection(command.split(" ")[2]);
+                System.out.println(deleteCollection(command.split(" ")[2]));
             } else if (command.startsWith("insert into ")) {
                 String collectionName = command.split(" ")[2];
                 ObjectNode jsonNode = parseJson(scanner);
                 if (jsonNode == null) continue;
-                insertIntoCollection(collectionName, jsonNode);
+                System.out.println(insertIntoCollection(collectionName, jsonNode));
             } else if (command.startsWith("get all from ")) {
                 String collectionName = command.split(" ")[2];
-                getAllFromCollection(collectionName);
-            } else if (command.startsWith("show collections")) {
-                showCollections();
+                System.out.println(getAllFromCollection(collectionName));
             } else {
                 System.out.println("Unknown command: " + command);
             }
@@ -129,8 +141,6 @@ public class Shell {
             System.out.println("Invalid JSON Object");
             return null;
         }
-
-        System.out.println("Parsed JSON: " + jsonNode.toString());
 
         return (ObjectNode) jsonNode;
     }

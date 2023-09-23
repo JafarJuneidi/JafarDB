@@ -8,32 +8,30 @@ public class WireProtocol {
     public static class Header {
         private OperationType operationType;
         private int payloadLength;
+        private boolean isBroadcast;
 
         public Header(OperationType operationType, int payloadLength) {
+            this(operationType, payloadLength, false);
+        }
+
+        public Header(OperationType operationType, int payloadLength, boolean isBroadcast) {
             this.operationType = operationType;
             this.payloadLength = payloadLength;
+            this.isBroadcast = isBroadcast;
         }
 
         public OperationType getOperationType() {
             return operationType;
         }
-
-        public void setOperationType(OperationType operationType) {
-            this.operationType = operationType;
-        }
-
         public int getPayloadLength() {
             return payloadLength;
         }
 
-        public void setPayloadLength(int payloadLength) {
-            this.payloadLength = payloadLength;
-        }
-
         public byte[] serialize() {
-            ByteBuffer buffer = ByteBuffer.allocate(4 + 4); // 4 bytes for the int representation of enum, 4 bytes for bodyLength
+            ByteBuffer buffer = ByteBuffer.wrap(allocateHeaderSpace());
             buffer.putInt(operationType.ordinal());
             buffer.putInt(payloadLength);
+            buffer.put((byte) (isBroadcast ? 1 : 0));
             return buffer.array();
         }
 
@@ -42,8 +40,13 @@ public class WireProtocol {
 
             OperationType operationType = OperationType.values()[buffer.getInt()];
             int bodyLength = buffer.getInt();
+            boolean isBroadcast = buffer.get() == 1;
 
-            return new Header(operationType, bodyLength);
+            return new Header(operationType, bodyLength, isBroadcast);
+        }
+
+        public static byte[] allocateHeaderSpace() {
+            return new byte[4 + 4 + 1];
         }
     }
 
@@ -54,6 +57,8 @@ public class WireProtocol {
         public byte[] getPayload() { return this.payload; }
 
         public OperationType getOperationType() { return header.operationType; }
+        public boolean getIsBroadcast() { return header.isBroadcast; }
+        public void setBroadcast(boolean isBroadcast) { this.header.isBroadcast = isBroadcast; }
 
         public Message(Header header, byte[] payload) {
             this.header = header;
@@ -75,7 +80,7 @@ public class WireProtocol {
     }
 
     public static Message createMessage(InputStream in) throws IOException {
-        byte[] responseHeaderData = new byte[4 + 4];
+        byte[] responseHeaderData = Header.allocateHeaderSpace();
         in.read(responseHeaderData);
         WireProtocol.Header responseHeader = WireProtocol.Header.deserialize(responseHeaderData);
 
@@ -94,6 +99,8 @@ public class WireProtocol {
         QUERY,
         RESPONSE,
         SHOW_COLLECTIONS,
-        DELETE_COLLECTION
+        SHOW_DATABASES,
+        DELETE_COLLECTION,
+        DELETE_DATABASE
     }
 }

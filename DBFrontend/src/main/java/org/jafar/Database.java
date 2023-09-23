@@ -1,14 +1,20 @@
 package org.jafar;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.io.ObjectInputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class Database {
     private final DB db;
@@ -20,9 +26,26 @@ public class Database {
         objectMapper = new ObjectMapper();
     }
 
-    public void createCollection(String collectionName) throws Constants.WriteInsideReadTransactionException, IOException {
+    public static List<String> getAllDatabases() throws IOException {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("data"), "*.db")) {
+            return StreamSupport.stream(stream.spliterator(), false)
+                    .map(Path::getFileName)
+                    .map(Path::toString)
+                    .map(filename -> filename.replace(".db", ""))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    public void createCollection(ObjectNode schema) throws Constants.WriteInsideReadTransactionException, IOException {
+        String collectionName = schema.remove("collectionName").asText();
+
         Transaction transaction = db.writeTransaction();
-        transaction.createCollection(collectionName.getBytes());
+        Collection collection = transaction.createCollection(collectionName.getBytes());
+
+        List<String> fieldNames = new ArrayList<>();
+        schema.fieldNames().forEachRemaining(fieldNames::add);
+        collection.put("schema".getBytes(), new ObjectMapper().writeValueAsBytes(fieldNames));
+
         transaction.commit();
     }
 
@@ -45,6 +68,11 @@ public class Database {
         }
     }
 
+    public boolean deleteDatabase(String name) throws IOException {
+        Path filePath = Paths.get("data", name);
+        return Files.deleteIfExists(filePath);
+    }
+
     public boolean deleteCollection(String collectionName) throws Constants.WriteInsideReadTransactionException, IOException {
         Transaction transaction = db.writeTransaction();
         boolean result = transaction.deleteCollection(collectionName.getBytes());
@@ -52,17 +80,29 @@ public class Database {
         return result;
     }
 
-    public void insertDocument(ObjectNode document, String collectionName) throws IOException, Constants.WriteInsideReadTransactionException {
+    public boolean insertDocument(ObjectNode document) throws IOException, Constants.WriteInsideReadTransactionException {
+        String collectionName = document.remove("collectionName").asText();
+
         Transaction transaction = db.writeTransaction();
         Optional<Collection> collection = transaction.getCollection(collectionName.getBytes());
         if (collection.isEmpty()) {
             throw new IOException();
         }
 
+        // schema must exist!
+        byte[] value = collection.get().find("schema".getBytes()).get().value();
+        List<String> fieldNames = new ObjectMapper().readValue(value, new TypeReference<List<String>>() {});
+        if (fieldNames.size() != document.size()) return false;
+
+        for (String field: fieldNames) {
+            if (!document.has(field)) return false;
+        }
+
         String key = UUID.randomUUID().toString();
         document.put("id", key);
         collection.get().put(key.getBytes(), document.toString().getBytes());
         transaction.commit();
+        return true;
     }
 
     public void updateDocument(ObjectNode document, String collectionName) throws IOException, Constants.WriteInsideReadTransactionException {

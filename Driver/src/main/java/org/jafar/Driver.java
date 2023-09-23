@@ -27,10 +27,9 @@ public class Driver {
         return objectNode.get("response").asText();
     }
 
-    public String createCollection(String collectionName) throws IOException {
-        ObjectNode objectNode = objectMapper.createObjectNode();
-        objectNode.put("name", collectionName);
-        objectNode = sendToDb(objectNode, WireProtocol.OperationType.CREATE_COLLECTION);
+    public String createCollection(String collectionName, ObjectNode schema) throws IOException {
+        schema.put("collectionName", collectionName);
+        ObjectNode objectNode = sendToDb(schema, WireProtocol.OperationType.CREATE_COLLECTION);
         return objectNode.get("response").asText();
     }
 
@@ -40,6 +39,20 @@ public class Driver {
         objectNode = sendToDb(objectNode, WireProtocol.OperationType.DELETE_COLLECTION);
         return objectNode.get("response").asText();
     }
+
+    public String deleteDatabase(String databaseName) throws IOException {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("name", databaseName);
+        objectNode = sendToDb(objectNode, WireProtocol.OperationType.DELETE_DATABASE);
+        return objectNode.get("response").asText();
+    }
+
+    public String getAllDatabases() throws IOException {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode = sendToDb(objectNode, WireProtocol.OperationType.SHOW_DATABASES);
+        return objectNode.get("response").toString();
+    }
+
     public String getAllCollections() throws IOException {
         ObjectNode objectNode = objectMapper.createObjectNode();
         objectNode = sendToDb(objectNode, WireProtocol.OperationType.SHOW_COLLECTIONS);
@@ -47,6 +60,7 @@ public class Driver {
     }
 
     public String insert(String collectionName, ObjectNode obj) throws IOException {
+        obj.put("collectionName", collectionName);
         ObjectNode objectNode = sendToDb(obj, WireProtocol.OperationType.INSERT);
         return objectNode.get("response").asText();
     }

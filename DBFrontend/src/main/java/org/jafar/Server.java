@@ -28,7 +28,7 @@ public class Server {
     public void start() {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Node started on: " + myHost + ":" + serverSocket.getLocalPort());
-            connectToHosts();
+//            connectToHosts();
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
@@ -68,7 +68,9 @@ class ClientHandler implements Runnable {
                 WireProtocol.Message message = WireProtocol.createMessage(in);
                 ObjectNode objectNode = (ObjectNode) objectMapper.readTree(message.getPayload());
 
-                if (message.getOperationType() != WireProtocol.OperationType.CREATE_DB && database == null) {
+                if (message.getOperationType() != WireProtocol.OperationType.CREATE_DB &&
+                        message.getOperationType() != WireProtocol.OperationType.SHOW_DATABASES &&
+                        database == null) {
                     objectNode = objectMapper.createObjectNode();
                     objectNode.put("response", "Database was not selected!");
                     message = WireProtocol.createMessage(WireProtocol.OperationType.RESPONSE, objectMapper.writeValueAsBytes(objectNode));
@@ -89,9 +91,29 @@ class ClientHandler implements Runnable {
                         message = WireProtocol.createMessage(WireProtocol.OperationType.RESPONSE, objectMapper.writeValueAsBytes(objectNode));
                         out.write(message.serialize());
                     }
+                    case SHOW_DATABASES -> {
+                        List<String> databases = Database.getAllDatabases();
+                        objectNode = objectMapper.createObjectNode();
+                        ArrayNode arrayNode = objectMapper.valueToTree(databases);
+                        objectNode.set("response", arrayNode);
+                        message = WireProtocol.createMessage(WireProtocol.OperationType.RESPONSE, objectMapper.writeValueAsBytes(objectNode));
+                        out.write(message.serialize());
+                    }
+                    case DELETE_DATABASE -> {
+                        boolean result = database.deleteDatabase(objectNode.get("name").asText());
+                        objectNode = objectMapper.createObjectNode();
+                        if (result) {
+                            objectNode.put("response", "Database deleted successfully");
+                            broadcast(message);
+                        } else {
+                            objectNode.put("response", "Failed to delete database");
+                        }
+                        message = WireProtocol.createMessage(WireProtocol.OperationType.RESPONSE, objectMapper.writeValueAsBytes(objectNode));
+                        out.write(message.serialize());
+                    }
                     case CREATE_COLLECTION -> {
                         try {
-                            database.createCollection(objectNode.get("name").asText());
+                            database.createCollection(objectNode.deepCopy());
                             broadcast(message);
                             objectNode = objectMapper.createObjectNode();
                             objectNode.put("response", "Collection Added successfully");
@@ -99,6 +121,14 @@ class ClientHandler implements Runnable {
                             objectNode = objectMapper.createObjectNode();
                             objectNode.put("response", e.getMessage());
                         }
+                        message = WireProtocol.createMessage(WireProtocol.OperationType.RESPONSE, objectMapper.writeValueAsBytes(objectNode));
+                        out.write(message.serialize());
+                    }
+                    case SHOW_COLLECTIONS -> {
+                        List<String> collections = database.getAllCollections();
+                        objectNode = objectMapper.createObjectNode();
+                        ArrayNode arrayNode = objectMapper.valueToTree(collections);
+                        objectNode.set("response", arrayNode);
                         message = WireProtocol.createMessage(WireProtocol.OperationType.RESPONSE, objectMapper.writeValueAsBytes(objectNode));
                         out.write(message.serialize());
                     }
@@ -119,20 +149,16 @@ class ClientHandler implements Runnable {
                         message = WireProtocol.createMessage(WireProtocol.OperationType.RESPONSE, objectMapper.writeValueAsBytes(objectNode));
                         out.write(message.serialize());
                     }
-                    case SHOW_COLLECTIONS -> {
-                        List<String> collections = database.getAllCollections();
-                        objectNode = objectMapper.createObjectNode();
-                        ArrayNode arrayNode = objectMapper.valueToTree(collections);
-                        objectNode.set("response", arrayNode);
-                        message = WireProtocol.createMessage(WireProtocol.OperationType.RESPONSE, objectMapper.writeValueAsBytes(objectNode));
-                        out.write(message.serialize());
-                    }
                     case INSERT -> {
                         try {
-                            database.insertDocument(objectNode, "users");
-                            broadcast(message);
+                            boolean result = database.insertDocument(objectNode.deepCopy());
                             objectNode = objectMapper.createObjectNode();
-                            objectNode.put("response", "Document Added successfully");
+                            if (result) {
+                                objectNode.put("response", "Document Added successfully");
+                                broadcast(message);
+                            } else {
+                                objectNode.put("response", "Schema doesn't match!");
+                            }
                         } catch (Constants.WriteInsideReadTransactionException e) {
                             objectNode = objectMapper.createObjectNode();
                             objectNode.put("response", e.getMessage());
@@ -167,7 +193,7 @@ class ClientHandler implements Runnable {
             e.printStackTrace();
         } finally {
             try {
-                database.close();
+                if (database != null) database.close();
                 clientSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -176,8 +202,12 @@ class ClientHandler implements Runnable {
     }
 
     public void broadcast(WireProtocol.Message message) throws IOException {
+        if (message.getIsBroadcast()) return;
+        message.setBroadcast(true);
+
         for (Map.Entry<String, Socket> entry: sockets.entrySet()) {
             if (Objects.equals(entry.getKey(), myHost)) continue;
+            System.out.println("Broadcasting to " + entry.getKey());
 
             OutputStream forwardOut = entry.getValue().getOutputStream();
             forwardOut.write(message.serialize());
