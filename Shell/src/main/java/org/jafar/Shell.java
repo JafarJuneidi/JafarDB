@@ -116,7 +116,7 @@ public class Shell {
                 if (jsonNode == null) continue;
                 System.out.println(insertIntoCollection(collectionName, jsonNode));
             } else if (command.startsWith("get all from ")) {
-                String collectionName = command.split(" ")[2];
+                String collectionName = command.split(" ")[3];
                 System.out.println(getAllFromCollection(collectionName));
             } else {
                 System.out.println("Unknown command: " + command);

@@ -180,7 +180,7 @@ class ClientHandler implements Runnable {
                         out.write(message.serialize());
                     }
                     case QUERY -> {
-                        List<JsonNode> items = database.getAllDocuments("users");
+                        List<JsonNode> items = database.getAllDocuments(objectNode.get("name").asText());
                         objectNode = objectMapper.createObjectNode();
                         ArrayNode arrayNode = objectMapper.valueToTree(items);
                         objectNode.set("response", arrayNode);

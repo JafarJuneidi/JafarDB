@@ -40,11 +40,19 @@ public class Database {
         String collectionName = schema.remove("collectionName").asText();
 
         Transaction transaction = db.writeTransaction();
-        Collection collection = transaction.createCollection(collectionName.getBytes());
+        transaction.createCollection(collectionName.getBytes());
+
+        Optional<Collection> optionalSchemaCollection = transaction.getCollection("schema".getBytes());
+        Collection schemaCollection;
+        if (optionalSchemaCollection.isEmpty()) {
+            schemaCollection = transaction.createCollection("schema".getBytes());
+        } else {
+            schemaCollection = optionalSchemaCollection.get();
+        }
 
         List<String> fieldNames = new ArrayList<>();
         schema.fieldNames().forEachRemaining(fieldNames::add);
-        collection.put("schema".getBytes(), new ObjectMapper().writeValueAsBytes(fieldNames));
+        schemaCollection.put(collectionName.getBytes(), new ObjectMapper().writeValueAsBytes(fieldNames));
 
         transaction.commit();
     }
@@ -89,8 +97,9 @@ public class Database {
             throw new IOException();
         }
 
-        // schema must exist!
-        byte[] value = collection.get().find("schema".getBytes()).get().value();
+        // schemaCollection & schema doc must exist!
+        Collection schemaCollection = transaction.getCollection("schema".getBytes()).get();
+        byte[] value = schemaCollection.find(collectionName.getBytes()).get().value();
         List<String> fieldNames = new ObjectMapper().readValue(value, new TypeReference<List<String>>() {});
         if (fieldNames.size() != document.size()) return false;
 

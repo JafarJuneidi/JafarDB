@@ -79,6 +79,7 @@ public class Driver {
 
     public JsonNode getAll(String collectionName) throws IOException {
         ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("name", collectionName);
         objectNode = sendToDb(objectNode, WireProtocol.OperationType.QUERY);
         return objectNode.get("response");
     }
