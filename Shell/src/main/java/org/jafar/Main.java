@@ -9,14 +9,14 @@ public class Main {
         int boostrapPort = 8888;
         int receivedPort = 9000;
 
-//        try (Socket socket = new Socket(serverAddress, boostrapPort);
-//             DataInputStream in = new DataInputStream(socket.getInputStream())) {
-//
-//            receivedPort = in.readInt();
-//            System.out.println("Received port from bootstrap: " + receivedPort);
-//        } catch (Exception e) {
-//            System.out.println(e.getMessage());
-//        }
+        try (Socket socket = new Socket(serverAddress, boostrapPort);
+             DataInputStream in = new DataInputStream(socket.getInputStream())) {
+
+            receivedPort = in.readInt();
+            System.out.println("Received port from bootstrap: " + receivedPort);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
 
         Shell shell = new Shell(serverAddress, receivedPort);
         shell.start();

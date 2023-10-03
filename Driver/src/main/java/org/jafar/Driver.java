@@ -8,10 +8,10 @@ import java.io.*;
 import java.net.Socket;
 
 public class Driver {
-    private Socket clientSocket;
-    private OutputStream out;
-    private InputStream in;
-    private ObjectMapper objectMapper;
+    private final Socket clientSocket;
+    private final OutputStream out;
+    private final InputStream in;
+    private final ObjectMapper objectMapper;
 
     public Driver(String host, int port) throws IOException {
         this.clientSocket = new Socket(host, port);

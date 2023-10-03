@@ -6,7 +6,6 @@ import java.nio.ByteOrder;
 import java.util.*;
 
 public class Node {
-    private DAL dal;
     private long pageNum;
     private List<Item> items;
     private List<Long> childNodes;
@@ -187,10 +186,6 @@ public class Node {
      */
     private int compare(byte[] a, byte[] b) {
         return Arrays.compareUnsigned(a, b);
-    }
-
-    public void setDal(DAL dal) {
-        this.dal = dal;
     }
 
     public List<Item> getItems() {

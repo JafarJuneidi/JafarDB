@@ -114,7 +114,6 @@ public class DAL {
         Node node = new Node();
         node.setPageNum(pageNum);
         node.deserialize(p.getData());
-        node.setDal(this);
         return node;
     }
 
@@ -174,7 +173,6 @@ public class DAL {
         node.setItems(items);
         node.setChildNodes(childNodes);
         node.setPageNum(freelist.getNextPage());
-        node.setDal(this);
         return node;
     }
 }

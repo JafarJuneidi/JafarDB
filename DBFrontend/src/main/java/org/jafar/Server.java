@@ -28,7 +28,7 @@ public class Server {
     public void start() {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Node started on: " + myHost + ":" + serverSocket.getLocalPort());
-//            connectToHosts();
+            connectToHosts();
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
