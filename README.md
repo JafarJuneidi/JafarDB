@@ -1,5 +1,7 @@
 # JafarDB - A Decentralized NoSQL Database System
 
+![JafarDB](./images/jafardb.png)
+
 ## Introduction
 JafarDB is a decentralized NoSQL database system designed and implemented by Jafar Juneidi. This project aims to leverage the benefits of NoSQL databases in managing unstructured data within a distributed environment. The key innovation lies in the elimination of a central manager node, enhancing fault tolerance, load balancing, and data consistency.
 
@@ -12,6 +14,7 @@ JafarDB is a decentralized NoSQL database system designed and implemented by Jaf
 - Utilizes B-Tree data structure for managing indexes.
 - Supports ACID principles for transactions.
 - Manages collections and ensures data consistency.
+![Storage Engine](./images/storage_engine.png)
 
 #### 1.2 Options
 - Configuration entity for the storage engine.
@@ -32,6 +35,8 @@ JafarDB is a decentralized NoSQL database system designed and implemented by Jaf
 #### 1.6 DAL (Data Access Layer)
 - Intermediary between high-level database operations and storage mechanisms.
 - Manages file, meta, freelist, page, and node operations.
+![DAL](./images/data_access_layer.png)
+
 
 #### 1.7 Node
 - Represents a fundamental building block of the B-Tree structure.
@@ -40,6 +45,7 @@ JafarDB is a decentralized NoSQL database system designed and implemented by Jaf
 #### 1.8 Collection
 - Represents a collection of key-value pairs within the database.
 - Manages B-Tree structure for data retrieval and manipulation.
+![Collections](./images/collections.png)
 
 #### 1.9 Transaction
 - Represents a transactional context for database operations.
@@ -76,10 +82,12 @@ JafarDB is a decentralized NoSQL database system designed and implemented by Jaf
 - Self-balancing tree data structure for efficient insertion, deletion, and search operations.
 - Ensures balanced height and efficient disk reads.
 - Adaptability to changes in data.
+![b_tree](./images/b_tree.png)
 
 ### 2. Slotted Pages
 - Storage method on disk for nodes with variable items.
 - Divides pages into regions for keys/values and offsets to items.
+![Slotted Pages](./images/slotted_pages.png)
 
 ## Multithreading and Locks
 - Storage Engine: Implements a Reader-Writer lock for concurrent read and write transactions.
