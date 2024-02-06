@@ -1,9 +1,5 @@
 # JafarDB - A Decentralized NoSQL Database System
 
-**Author:** Jafar Juneidi  
-**Role:** Software Engineer at LabibaAI  
-**Education:** Computer Engineering graduate from JUST  
-
 ## Introduction
 JafarDB is a decentralized NoSQL database system designed and implemented by Jafar Juneidi. This project aims to leverage the benefits of NoSQL databases in managing unstructured data within a distributed environment. The key innovation lies in the elimination of a central manager node, enhancing fault tolerance, load balancing, and data consistency.
 
@@ -24,6 +20,7 @@ JafarDB is a decentralized NoSQL database system designed and implemented by Jaf
 #### 1.3 Freelist
 - Manages and optimizes storage allocation within the database.
 - Tracks allocated and released pages for efficient space utilization.
+![Freelist](./images/freelist.png)
 
 #### 1.4 Meta
 - Serves as the metadata manager, holding essential information about the database's structure.
